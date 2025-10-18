@@ -1,0 +1,467 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>摩尔斯电码学习工具</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <div class="logo">
+                <i class="fas fa-wifi"></i>
+                <span>摩尔斯电码学习工具</span>
+            </div>
+            <button class="mobile-menu-btn">
+                <i class="fas fa-bars"></i>
+            </button>
+            <nav>
+                <ul class="mobile-menu">
+                    <li><a href="#koch" class="nav-link active">Koch学习法</a></li>
+                    <li><a href="#speed" class="nav-link">速度练习</a></li>
+                    <li><a href="#wae" class="nav-link">WAE训练</a></li>
+                    <li><a href="#wav" class="nav-link">WAV生成器</a></li>
+                    <li><a href="#converter" class="nav-link">文本转换器</a></li>
+                    <li><a href="#reference" class="nav-link">摩尔斯码参考表</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <!-- Koch学习法模块 -->
+        <section id="koch" class="module active">
+            <h2>Koch学习法</h2>
+            <p>Koch学习法从两个字符开始，保持较高的速度(20wpm)，当正确率达到90%时添加新字符。</p>
+            
+            <div class="controls">
+                <div class="control-group">
+                    <label for="koch-lesson-selector">选择课程级别</label>
+                    <select id="koch-lesson-selector" onchange="updateKochModuleDisplay()">
+                        <option value="1">1 - K, M</option>
+                        <option value="2">2 - U</option>
+                        <option value="3">3 - R</option>
+                        <option value="4">4 - E</option>
+                        <option value="5">5 - S</option>
+                        <option value="6">6 - N</option>
+                        <option value="7">7 - A</option>
+                        <option value="8">8 - P</option>
+                        <option value="9">9 - T</option>
+                        <option value="10">10 - L</option>
+                        <option value="11">11 - W</option>
+                        <option value="12">12 - I</option>
+                        <option value="13">13 - .</option>
+                        <option value="14">14 - J</option>
+                        <option value="15">15 - Z</option>
+                        <option value="16">16 - =</option>
+                        <option value="17">17 - F</option>
+                        <option value="18">18 - O</option>
+                        <option value="19">19 - Y</option>
+                        <option value="20">20 - ,</option>
+                        <option value="21">21 - V</option>
+                        <option value="22">22 - G</option>
+                        <option value="23">23 - 5</option>
+                        <option value="24">24 - /</option>
+                        <option value="25">25 - Q</option>
+                        <option value="26">26 - 9</option>
+                        <option value="27">27 - 2</option>
+                        <option value="28">28 - H</option>
+                        <option value="29">29 - 3</option>
+                        <option value="30">30 - 8</option>
+                        <option value="31">31 - B</option>
+                        <option value="32">32 - ?</option>
+                        <option value="33">33 - 4</option>
+                        <option value="34">34 - 7</option>
+                        <option value="35">35 - C</option>
+                        <option value="36">36 - 1</option>
+                        <option value="37">37 - D</option>
+                        <option value="38">38 - 6</option>
+                        <option value="39">39 - 0</option>
+                        <option value="40">40 - X</option>
+                    </select>
+                </div>
+                
+                <div class="control-group">
+                    <label for="koch-speed">速度 (wpm): <span id="koch-speed-value">20</span></label>
+                    <input type="range" id="koch-speed" min="5" max="40" value="20">
+                </div>
+                
+                <div class="control-group">
+                    <label for="koch-tone">音调 (Hz): <span id="koch-tone-value">600</span></label>
+                    <input type="range" id="koch-tone" min="300" max="1500" value="600">
+                </div>
+                
+                <div class="control-group">
+                    <label for="koch-duration">练习时长 (秒): <span id="koch-duration-value">30</span></label>
+                    <input type="range" id="koch-duration" min="10" max="120" value="30">
+                </div>
+                
+                <div class="control-group checkbox-group">
+                    <input type="checkbox" id="koch-farnsworth" checked>
+                    <label for="koch-farnsworth">使用Farnsworth节奏</label>
+                </div>
+            </div>
+            
+            <div class="characters-display">
+                <h3>当前级别字符</h3>
+                <div id="koch-all-characters"></div>
+            </div>
+            
+            <div class="characters-display">
+                <h3>新增字符</h3>
+                <div id="koch-new-characters"></div>
+            </div>
+            
+            <div class="exercise-area">
+                <div class="display-area" id="koch-display">点击播放按钮开始练习</div>
+                <div class="input-area">
+                    <input type="text" id="koch-input" placeholder="在此输入你听到的字符...">
+                </div>
+            </div>
+            
+            <div class="button-group">
+                <button id="koch-play" class="btn btn-primary">
+                    <i class="fas fa-play"></i> 播放
+                </button>
+                <button id="koch-check" class="btn btn-success">
+                    <i class="fas fa-check"></i> 检查答案
+                </button>
+                <button id="koch-regenerate" class="btn btn-primary">
+                    <i class="fas fa-sync-alt"></i> 重新生成练习
+                </button>
+                <button id="koch-download" class="btn btn-primary">
+                    <i class="fas fa-download"></i> 下载音频
+                </button>
+            </div>
+            
+            <div class="feedback-area" id="koch-feedback"></div>
+            
+            <div class="stats">
+                <div class="stat-item">
+                    <div class="stat-value" id="koch-total">0</div>
+                    <div class="stat-label">总练习数</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="koch-correct">0</div>
+                    <div class="stat-label">正确数</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="koch-accuracy">0%</div>
+                    <div class="stat-label">正确率</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 速度练习模块 -->
+        <section id="speed" class="module hidden">
+            <h2>速度练习</h2>
+            <p>通过不同类型的内容练习提高接收速度和准确性。</p>
+            
+            <div class="controls">
+                <div class="control-group">
+                    <label for="speed-type">练习类型</label>
+                    <select id="speed-type">
+                        <option value="code-groups">代码组</option>
+                        <option value="plain-text">纯文本</option>
+                        <option value="callsign">呼号</option>
+                        <option value="words">通联简语</option>
+                    </select>
+                </div>
+                
+                <div class="control-group">
+                    <label for="speed-speed">速度 (wpm): <span id="speed-value">25</span></label>
+                    <input type="range" id="speed-speed" min="5" max="60" value="25">
+                </div>
+                
+                <div class="control-group">
+                    <label for="speed-tone">音调 (Hz): <span id="speed-tone-value">600</span></label>
+                    <input type="range" id="speed-tone" min="300" max="1500" value="600">
+                </div>
+                
+                <div class="control-group">
+                    <label for="speed-duration">练习时长 (秒): <span id="speed-duration-value">30</span></label>
+                    <input type="range" id="speed-duration" min="10" max="120" value="30">
+                </div>
+                
+                <div class="control-group checkbox-group">
+                    <input type="checkbox" id="speed-repeat">
+                    <label for="speed-repeat">重复播放</label>
+                </div>
+            </div>
+            
+            <div class="exercise-area">
+                <div class="display-area" id="speed-display">点击播放按钮开始练习</div>
+                <div class="input-area">
+                    <input type="text" id="speed-input" placeholder="在此输入你听到的内容...">
+                </div>
+            </div>
+            
+            <div class="button-group">
+                <button id="speed-play" class="btn btn-primary">
+                    <i class="fas fa-play"></i> 播放
+                </button>
+                <button id="speed-replay" class="btn btn-primary">
+                    <i class="fas fa-redo"></i> 重放
+                </button>
+                <button id="speed-check" class="btn btn-success">
+                    <i class="fas fa-check"></i> 检查答案
+                </button>
+                <button id="speed-regenerate" class="btn btn-primary">
+                    <i class="fas fa-sync-alt"></i> 重新生成练习
+                </button>
+                <button id="speed-download" class="btn btn-primary">
+                    <i class="fas fa-download"></i> 下载音频
+                </button>
+            </div>
+            
+            <div class="feedback-area" id="speed-feedback"></div>
+            
+            <div class="stats">
+                <div class="stat-item">
+                    <div class="stat-value" id="speed-total">0</div>
+                    <div class="stat-label">总练习数</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="speed-correct">0</div>
+                    <div class="stat-label">正确数</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="speed-accuracy">0%</div>
+                    <div class="stat-label">正确率</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- WAE训练模块 -->
+        <section id="wae" class="module hidden">
+            <h2>WAE QTC训练</h2>
+            <p>练习接收和记录QTC消息，提高实际通信能力。</p>
+            
+            <div class="controls">
+                <div class="control-group">
+                    <label for="wae-format">消息格式</label>
+                    <select id="wae-format">
+                        <option value="wae">WAE格式</option>
+                        <option value="dx">DX格式</option>
+                    </select>
+                </div>
+                
+                <div class="control-group">
+                    <label for="wae-count">消息数量: <span id="wae-count-value">3</span></label>
+                    <input type="range" id="wae-count" min="1" max="10" value="3">
+                </div>
+                
+                <div class="control-group">
+                    <label for="wae-speed">速度 (wpm): <span id="wae-speed-value">20</span></label>
+                    <input type="range" id="wae-speed" min="5" max="40" value="20">
+                </div>
+            </div>
+            
+            <div class="exercise-area">
+                <div class="display-area" id="wae-display">点击播放按钮开始练习</div>
+                <div class="input-area">
+                    <input type="text" id="wae-input" placeholder="在此输入你听到的消息... (使用 / 分隔消息)">
+                </div>
+            </div>
+            
+            <div class="button-group">
+                <button id="wae-play" class="btn btn-primary">
+                    <i class="fas fa-play"></i> 播放
+                </button>
+                <button id="wae-check" class="btn btn-success">
+                    <i class="fas fa-check"></i> 检查答案
+                </button>
+                <button id="wae-regenerate" class="btn btn-primary">
+                    <i class="fas fa-sync-alt"></i> 重新生成练习
+                </button>
+            </div>
+            
+            <div class="feedback-area" id="wae-feedback"></div>
+            
+            <div class="stats">
+                <div class="stat-item">
+                    <div class="stat-value" id="wae-total">0</div>
+                    <div class="stat-label">总练习数</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="wae-correct">0</div>
+                    <div class="stat-label">正确数</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="wae-accuracy">0%</div>
+                    <div class="stat-label">正确率</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- WAV生成器模块 -->
+        <section id="wav" class="module hidden">
+            <h2>WAV生成器</h2>
+            <p>生成自定义的摩尔斯电码音频文件，用于离线练习。</p>
+            
+            <div class="controls">
+                <div class="control-group">
+                    <label for="wav-type">内容类型</label>
+                    <select id="wav-type">
+                        <option value="koch">Koch课程</option>
+                        <option value="random">随机字符</option>
+                        <option value="words">通联简语</option>
+                        <option value="callsigns">呼号</option>
+                    </select>
+                </div>
+                
+                <div class="control-group" id="wav-level-group">
+                    <label for="wav-level">Koch级别</label>
+                    <select id="wav-level">
+                        <option value="1">1 - K, M</option>
+                        <option value="2">2 - U</option>
+                        <option value="3">3 - R</option>
+                        <option value="4">4 - E</option>
+                        <option value="5">5 - S</option>
+                        <option value="6">6 - N</option>
+                        <option value="7">7 - A</option>
+                        <option value="8">8 - P</option>
+                        <option value="9">9 - T</option>
+                        <option value="10">10 - L</option>
+                        <option value="11">11 - W</option>
+                        <option value="12">12 - I</option>
+                        <option value="13">13 - .</option>
+                        <option value="14">14 - J</option>
+                        <option value="15">15 - Z</option>
+                        <option value="16">16 - =</option>
+                        <option value="17">17 - F</option>
+                        <option value="18">18 - O</option>
+                        <option value="19">19 - Y</option>
+                        <option value="20">20 - ,</option>
+                        <option value="21">21 - V</option>
+                        <option value="22">22 - G</option>
+                        <option value="23">23 - 5</option>
+                        <option value="24">24 - /</option>
+                        <option value="25">25 - Q</option>
+                        <option value="26">26 - 9</option>
+                        <option value="27">27 - 2</option>
+                        <option value="28">28 - H</option>
+                        <option value="29">29 - 3</option>
+                        <option value="30">30 - 8</option>
+                        <option value="31">31 - B</option>
+                        <option value="32">32 - ?</option>
+                        <option value="33">33 - 4</option>
+                        <option value="34">34 - 7</option>
+                        <option value="35">35 - C</option>
+                        <option value="36">36 - 1</option>
+                        <option value="37">37 - D</option>
+                        <option value="38">38 - 6</option>
+                        <option value="39">39 - 0</option>
+                        <option value="40">40 - X</option>
+                    </select>
+                </div>
+                
+                <div class="control-group">
+                    <label for="wav-speed">速度 (wpm): <span id="wav-speed-value">20</span></label>
+                    <input type="range" id="wav-speed" min="5" max="40" value="20">
+                </div>
+                
+                <div class="control-group">
+                    <label for="wav-tone">音调 (Hz): <span id="wav-tone-value">600</span></label>
+                    <input type="range" id="wav-tone" min="300" max="1500" value="600">
+                </div>
+                
+                <div class="control-group">
+                    <label for="wav-duration">音频时长 (秒): <span id="wav-duration-value">60</span></label>
+                    <input type="range" id="wav-duration" min="10" max="300" value="60">
+                </div>
+                
+                <div class="control-group checkbox-group">
+                    <input type="checkbox" id="wav-farnsworth" checked>
+                    <label for="wav-farnsworth">使用Farnsworth节奏</label>
+                </div>
+            </div>
+            
+            <div class="exercise-area">
+                <label>内容预览:</label>
+                <div class="display-area" id="wav-preview-text"></div>
+            </div>
+            
+            <div class="button-group">
+                <button id="wav-generate" class="btn btn-primary">
+                    <i class="fas fa-magic"></i> 生成音频
+                </button>
+                <button id="wav-play" class="btn btn-primary">
+                    <i class="fas fa-play"></i> 播放内容
+                </button>
+                <button id="wav-regenerate-content" class="btn btn-primary">
+                    <i class="fas fa-sync-alt"></i> 重新生成内容
+                </button>
+                <button id="wav-download" class="btn btn-primary hidden">
+                    <i class="fas fa-download"></i> 下载音频
+                </button>
+            </div>
+            
+            <div class="feedback-area" id="wav-feedback"></div>
+        </section>
+
+        <!-- 文本转换器模块 -->
+        <section id="converter" class="module hidden">
+            <h2>文本转换器</h2>
+            <p>将文本转换为摩尔斯电码，或播放任意文本的摩尔斯电码。</p>
+            
+            <div class="controls">
+                <div class="control-group">
+                    <label for="convert-speed">速度 (wpm): <span id="convert-speed-value">20</span></label>
+                    <input type="range" id="convert-speed" min="5" max="40" value="20">
+                </div>
+                
+                <div class="control-group">
+                    <label for="convert-tone">音调 (Hz): <span id="convert-tone-value">600</span></label>
+                    <input type="range" id="convert-tone" min="300" max="1500" value="600">
+                </div>
+                
+                <div class="control-group checkbox-group">
+                    <input type="checkbox" id="convert-farnsworth" checked>
+                    <label for="convert-farnsworth">使用Farnsworth节奏</label>
+                </div>
+            </div>
+            
+            <div class="exercise-area">
+                <label for="convert-input">输入文本:</label>
+                <div class="input-area">
+                    <input type="text" id="convert-input" placeholder="输入要转换的文本...">
+                </div>
+                
+                <label>摩尔斯电码:</label>
+                <div class="display-area" id="morse-output">输入文本以转换为摩尔斯码</div>
+            </div>
+            
+            <div class="button-group">
+                <button id="convert-play" class="btn btn-primary">
+                    <i class="fas fa-play"></i> 播放摩尔斯码
+                </button>
+                <button id="convert-copy" class="btn btn-primary">
+                    <i class="fas fa-copy"></i> 复制摩尔斯码
+                </button>
+                <button id="convert-download" class="btn btn-primary">
+                    <i class="fas fa-download"></i> 下载音频
+                </button>
+            </div>
+            
+            <div class="feedback-area" id="convert-feedback"></div>
+        </section>
+
+        <!-- 摩尔斯码参考表模块 -->
+        <section id="reference" class="module hidden">
+            <h2>摩尔斯码参考表</h2>
+            <p>点击任意字符可播放其摩尔斯电码音频。</p>
+            
+            <div class="morse-chart" id="morse-chart"></div>
+        </section>
+    </main>
+
+    <footer>
+        <p><a href="https://morse.ham.moe/" target="_blank">网络摩尔斯码通联</a></p>
+    </footer>
+    <script src="script.js"></script>
+</body>
+</html>
