@@ -681,6 +681,7 @@ function calculateMorseDuration(text, wpm) {
     return totalDuration;
 }
 
+// 音频播放核心函数（修复间隔问题）
 async function playMorseCode(text, wpm, tone, useFarnsworth) {
     return new Promise(async (resolve, reject) => {
         if (!audioContext) {
@@ -690,26 +691,39 @@ async function playMorseCode(text, wpm, tone, useFarnsworth) {
         
         try {
             const dotDuration = 1200 / wpm; // 点的持续时间（毫秒）
-            let charGap = dotDuration * 3;  // 字符间间隔
-            const wordGap = dotDuration * 7; // 词间间隔
+            let charGap = dotDuration * 3;  // 字符间间隔（标准3个点长）
+            const wordGap = dotDuration * 7; // 词间间隔（标准7个点长）
+            const groupGap = dotDuration * 10; // 组间间隔（增强版，10个点长）
             
-            // 应用Farnsworth节奏（对于慢速发送，增加间隔但保持元素速度）
+            // 应用Farnsworth节奏（慢速时放大间隔）
             if (useFarnsworth && wpm < 20) {
                 const farnsworthFactor = 1.5 + (20 - wpm) * 0.1;
                 charGap *= farnsworthFactor;
+                wordGap *= farnsworthFactor;
+                groupGap *= farnsworthFactor;
             }
             
             let currentTime = audioContext.currentTime;
-            let groupSize = 5;
-            let playIndex = 0;
-            for (const char of text.replace(/\s/g, '')) {
+            let charCount = 0; // 计数用于组间停顿
+            
+            // 逐字符处理
+            for (const char of text) {
                 if (!isPlaying) {
                     resolve();
                     return;
                 }
+                
+                // 1. 处理空格（词间间隔）
+                if (char === ' ') {
+                    currentTime += wordGap / 1000;
+                    charCount = 0; // 重置组计数
+                    continue;
+                }
+                
                 const code = morseCodeMap[char.toUpperCase()];
                 if (!code) continue;
-                // 播放字符的摩尔斯码
+                
+                // 2. 播放单个字符的摩尔斯码（点/划）
                 for (const symbol of code) {
                     if (!isPlaying) {
                         resolve();
@@ -719,20 +733,29 @@ async function playMorseCode(text, wpm, tone, useFarnsworth) {
                     oscillator.type = 'sine';
                     oscillator.frequency.setValueAtTime(tone, currentTime);
                     oscillator.connect(gainNode);
-                    const duration = symbol === '.' ? dotDuration : dotDuration * 3;
+                    
+                    // 点/划的持续时间
+                    const symbolDuration = symbol === '.' ? dotDuration : dotDuration * 3;
                     oscillator.start(currentTime);
-                    oscillator.stop(currentTime + duration / 1000);
-                    currentTime += duration / 1000;
-                    currentTime += dotDuration / 1000; // 符号间间隔
+                    oscillator.stop(currentTime + symbolDuration / 1000);
+                    
+                    // 推进时间
+                    currentTime += symbolDuration / 1000;
+                    currentTime += dotDuration / 1000; // 符号间间隔（1个点长）
+                    
+                    // 等待当前符号播放完成
                     await new Promise(resolve => {
                         oscillator.onended = resolve;
                     });
                 }
+                
+                // 3. 添加字符间间隔
                 currentTime += (charGap - dotDuration) / 1000;
-                playIndex++;
-                // 每5字符后插入组间长停顿
-                if (playIndex % groupSize === 0 && playIndex !== 0) {
-                    currentTime += (wordGap * 2) / 1000;
+                charCount++;
+                
+                // 4. 每5个字符添加组间长停顿
+                if (charCount % 5 === 0 && char !== ' ') {
+                    currentTime += (groupGap - charGap) / 1000;
                 }
             }
             
@@ -741,6 +764,58 @@ async function playMorseCode(text, wpm, tone, useFarnsworth) {
             reject(error);
         }
     });
+}
+
+// Koch模块播放函数
+async function playExercise() {
+    if (isPlaying) {
+        stopAudio();
+        playBtn.innerHTML = '<i class="fas fa-play"></i> 播放';
+        isPlaying = false;
+        return;
+    }
+    
+    try {
+        if (audioContext.state === 'suspended') {
+            await audioContext.resume();
+        }
+
+        let exercise = currentExercise || generateExercise();
+        const allowedChars = getKochLevelCharacters(currentKochLevel);
+        
+        // 仅过滤非法字符，保留空格
+        exercise = exercise.split('').filter(char => {
+            return allowedChars.includes(char) || char === ' ';
+        }).join('');
+        
+        if (!exercise) {
+            generateExercise();
+            exercise = currentExercise;
+            if (!exercise) {
+                showFeedback('无法生成有效的练习内容，请检查当前级别设置', 'error', feedbackArea);
+                return;
+            }
+        }
+        
+        isPlaying = true;
+        playBtn.innerHTML = '<i class="fas fa-stop"></i> 停止';
+        
+        const speed = parseInt(speedSlider.value);
+        const tone = parseInt(toneSlider.value);
+        const useFarnsworth = farnsworthCheckbox.checked;
+        
+        // 播放带空格的完整文本
+        await playMorseCode(exercise, speed, tone, useFarnsworth);
+        
+        isPlaying = false;
+        playBtn.innerHTML = '<i class="fas fa-play"></i> 播放';
+    } catch (error) {
+        console.error('播放音频时出错:', error);
+        showFeedback('播放音频时出错，请重试', 'error', feedbackArea);
+        isPlaying = false;
+        stopAudio();
+        playBtn.innerHTML = '<i class="fas fa-play"></i> 播放';
+    }
 }
 
 async function createAudioBlobUrl(text, wpm, tone, useFarnsworth) {
@@ -1046,43 +1121,51 @@ function initKochModule() {
     };
     // 生成练习内容（5字符一组，组间空格）
     window.generateExercise = function() {
-        const characters = getKochLevelCharacters(currentKochLevel);
-        if (characters.length === 0) {
-            displayArea.textContent = '无法生成练习，当前级别没有可用字符';
-            return;
-        }
-        const duration = parseInt(durationSlider.value);
-        const speed = parseInt(speedSlider.value);
-        const useFarnsworth = farnsworthCheckbox.checked;
-        const charCount = calculateCharacterCount(duration, speed, useFarnsworth, 'koch', currentKochLevel);
-        // 至少一组，按5字符一组
-        const totalChars = Math.max(5, Math.round(charCount / 5) * 5);
-        let exerciseArr = [];
-        for (let i = 0; i < totalChars; i++) {
-            let currentChar;
-            if (i > 0 && Math.random() < 0.3) {
-                do {
-                    const randomIndex = Math.floor(Math.random() * characters.length);
-                    currentChar = characters[randomIndex];
-                } while (currentChar === exerciseArr[i-1] && characters.length > 1);
-            } else {
+    const characters = getKochLevelCharacters(currentKochLevel);
+    if (characters.length === 0) {
+        displayArea.textContent = '无法生成练习，当前级别没有可用字符';
+        return;
+    }
+    const duration = parseInt(durationSlider.value);
+    const speed = parseInt(speedSlider.value);
+    const useFarnsworth = farnsworthCheckbox.checked;
+    const charCount = calculateCharacterCount(duration, speed, useFarnsworth, 'koch', currentKochLevel);
+    
+    // 至少生成5个字符（1组），向上取整为5的倍数
+    const totalChars = Math.max(5, Math.ceil(charCount / 5) * 5);
+    let exerciseArr = [];
+    
+    // 生成随机字符数组（避免连续重复字符）
+    for (let i = 0; i < totalChars; i++) {
+        let currentChar;
+        // 30%概率避免和前一个字符重复（提升练习难度）
+        if (i > 0 && Math.random() < 0.3) {
+            do {
                 const randomIndex = Math.floor(Math.random() * characters.length);
                 currentChar = characters[randomIndex];
-            }
-            exerciseArr.push(currentChar);
+            } while (currentChar === exerciseArr[i-1] && characters.length > 1);
+        } else {
+            const randomIndex = Math.floor(Math.random() * characters.length);
+            currentChar = characters[randomIndex];
         }
-        // 分组插入空格
-        let exercise = '';
-        for (let i = 0; i < exerciseArr.length; i++) {
-            exercise += exerciseArr[i];
-            if ((i+1) % 5 === 0 && i !== exerciseArr.length-1) exercise += ' ';
-        }
-        currentExercise = exercise;
-        displayArea.textContent = '点击播放按钮听取摩尔斯码';
-        inputField.value = '';
-        feedbackArea.className = 'feedback-area';
+        exerciseArr.push(currentChar);
     }
     
+    // 每5个字符插入一个空格
+    let exercise = '';
+    for (let i = 0; i < exerciseArr.length; i++) {
+        exercise += exerciseArr[i];
+        // 每5个字符加空格，且不是最后一个字符
+        if ((i + 1) % 5 === 0 && i !== exerciseArr.length - 1) {
+            exercise += ' ';
+        }
+    }
+    
+    currentExercise = exercise;
+    displayArea.textContent = '点击播放按钮听取摩尔斯码';
+    inputField.value = '';
+    feedbackArea.className = 'feedback-area';
+}
     // 播放练习的摩尔斯码
     async function playExercise() {
         if (isPlaying) {
