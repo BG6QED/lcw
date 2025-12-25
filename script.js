@@ -97,9 +97,61 @@ const morseCodeMap = {
 
 // 常用摩尔斯码通联简语
 const commonQSignals = [
-    'CQ', 'QRZ', 'QSO', 'QTH', 'QRX', 'QRV', 'QRL', 'QRM', 'QRN', 'QSY',
-    'QSL', 'QTH', 'DE', 'K', 'KN', 'AR', 'SK', 'BT', 'AA', 'RRR',
-    'RST', '5NN', '73', '88', '911', 'CQDX', 'FB', 'GA', 'GE', 'GM'
+    // ===== 呼叫 / 控制 =====
+    'CQ', 'CQDX', 'QRZ', 'DE', 'K', 'KN', 'AR', 'SK', 'BT',
+    'AA', 'RRR', 'BK', 'AS',
+
+    // ===== 信号 / 状态 =====
+    'RST', '5NN', 'QSB', 'QRM', 'QRN', 'QSY', 'QRX', 'QRV',
+    'QRL', 'QRU', 'QRS', 'QRQ', 'QRO', 'QRP',
+
+    // ===== 确认 / 结束 =====
+    'QSL', 'QSO', 'TU', 'TNX', 'FB', 'OK',
+
+    // ===== 问候 / 时间 =====
+    'GA', 'GE', 'GM', 'GN', 'CUL', 'CUAGN',
+
+    // ===== 人员 / 称呼 =====
+    'OM', 'YL', 'XYL',
+    'NAME', 'CALL', 'OP',
+    'UR', 'MY', 'HR',
+
+    // ===== 地点 / 路径 =====
+    'QTH', 'LOC', 'GRID',
+    'VIA', 'BURO', 'HOME',
+    'DX', 'EU', 'AS', 'NA', 'AF', 'OC', 'SA',
+
+    // ===== 设备 / 天线 / 功率 =====
+    'RIG', 'ANT', 'ANTENNA',
+    'YAGI', 'DIPOLE', 'VERT',
+    'PWR', 'WATTS', 'AMP',
+    'RX', 'TX', 'TRX',
+    'KEY', 'MIC', 'SPKR',
+    'ICOM', 'KENWOOD', 'YAESU',
+
+    // ===== 传播 / 操作 =====
+    'ES', 'FER', 'HW', 'ABT',
+    'TEST', 'CONDX', 'WX',
+    'INFO', 'RPRT',
+
+    // ===== 天气 / 环境 =====
+    'RAIN', 'SNOW', 'CLDY', 'SUNNY',
+    'COLD', 'HOT', 'WARM',
+    'TEMP', 'MINUS',
+
+    // ===== 数字 / 竞赛 =====
+    'NR', 'NO', 'SERIAL',
+    'PSE', 'AGN', 'ALL',
+
+    // ===== 礼貌 / 常用结尾 =====
+    'HPE', 'GL', 'GP', 'VY',
+    'DR', 'ALSO',
+
+    // ===== 国家 / 示例 =====
+    'CHINA', 'JAPAN', 'USA', 'RUSSIA',
+
+    // ===== 常见数字词 =====
+    '73', '88', '599', '55'
 ];
 
 // 国家呼号前缀规则 - 根据ITU标准
